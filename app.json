@@ -55,7 +55,8 @@
     "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/9247c3da-7676-4420-a39d-cd53e705fb33"
     },
     "extra": {
       "eas": {
