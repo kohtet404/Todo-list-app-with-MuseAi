@@ -1,4 +1,4 @@
-# Todo List — Final (v2.1.0)
+# Todo List — Final (v1.1.0)
 
 React Native (Expo SDK 51) todo app. Single complete project — see
 **FINAL_SETUP.md** for the build/link walkthrough (Burmese).
@@ -19,6 +19,7 @@ Not included on purpose: cloud sync / accounts (needs a server) —
 everything works fully offline, data stays on the device.
 
 Code layout (all UI text in English):
+
 - App.jsx / App.js — entry only
 - src/screens/ — HomeScreen, CompletedScreen, StatsScreen, SettingsScreen, AddEditTaskScreen
 - src/components/ — Header, TodoItem, SearchBar, FilterBar, SmartFilterBar, CategoryFilterBar, TagFilterBar, SortBar, PrioritySelector, CategorySelector, RecurrenceSelector, CalendarPicker, SubtaskEditor, StatsCard, FocusTimer, EmptyState, BottomTabBar
