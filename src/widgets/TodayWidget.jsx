@@ -2,11 +2,17 @@
 // IMPORTANT: these are NOT normal React Native components. FlexWidget /
 // TextWidget come from react-native-android-widget and are converted to
 // real Android widget views — regular RN <View>/<Text> will not work here.
+//
+// Each task row has a real CHECKBOX: tapping it fires a WIDGET_CLICK
+// action (handled in widgetTaskHandler.jsx) which completes the task
+// in storage and redraws the widget. Tapping anywhere else on the
+// widget opens the app (OPEN_APP).
 import React from 'react';
 import { FlexWidget, TextWidget } from 'react-native-android-widget';
 import { getDueStatus, formatDueLabel } from '../utils/taskUtils';
 
 export const WIDGET_NAME = 'TodoToday';
+export const TOGGLE_TASK_ACTION = 'TOGGLE_TASK';
 
 // Pick what the widget shows from the full task list: active tasks,
 // overdue first, then due today / upcoming by date, then the rest.
@@ -70,17 +76,38 @@ export default function TodayWidget({ data }) {
 
       {items.length === 0 ? (
         <TextWidget
-          text="Nothing to do. Tap to add a task."
+          text="All done 🎉 Tap to add a task."
           style={{ fontSize: 13, color: '#94a3b8' }}
         />
       ) : (
         items.map((item) => (
           <FlexWidget
             key={item.id}
-            style={{ width: 'match_parent', flexDirection: 'row', alignItems: 'center' }}
+            style={{
+              width: 'match_parent',
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingTop: 5,
+              paddingBottom: 5,
+            }}
           >
+            {/* The checkbox: its own click action completes the task
+                without opening the app. */}
+            <FlexWidget
+              clickAction={TOGGLE_TASK_ACTION}
+              clickActionData={{ taskId: item.id }}
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 7,
+                borderWidth: 2,
+                borderColor: '#4f46e5',
+                backgroundColor: '#eef2ff',
+                marginRight: 10,
+              }}
+            />
             <TextWidget
-              text={`•  ${item.title}`}
+              text={item.title}
               truncate="END"
               maxLines={1}
               style={{ fontSize: 14, color: '#0f172a' }}

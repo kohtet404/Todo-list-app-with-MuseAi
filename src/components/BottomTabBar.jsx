@@ -21,7 +21,7 @@ export default function BottomTabBar({ activeTab, onChange }) {
     <View style={styles.bar}>
       {TABS.map((tab) => (
         <TouchableOpacity key={tab.key} style={styles.tab} onPress={() => onChange(tab.key)}>
-          <View>
+          <View style={[styles.iconWrap, activeTab === tab.key && styles.iconWrapActive]}>
             <Text style={styles.icon}>{tab.icon}</Text>
             {tab.key === 'home' && stats.remaining > 0 && (
               <View style={styles.badge}>
@@ -43,6 +43,8 @@ function makeStyles(colors) {
       borderTopColor: colors.border, paddingTop: 8, paddingBottom: 18,
     },
     tab: { flex: 1, alignItems: 'center' },
+    iconWrap: { paddingHorizontal: 14, paddingVertical: 3, borderRadius: 999 },
+    iconWrapActive: { backgroundColor: colors.primarySoft },
     icon: { fontSize: 20 },
     badge: {
       position: 'absolute', top: -4, right: -14, minWidth: 18, height: 18,

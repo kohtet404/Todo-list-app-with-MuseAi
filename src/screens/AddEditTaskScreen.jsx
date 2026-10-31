@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useSettings } from '../context/SettingsContext';
 import { useTodos } from '../context/TodoContext';
-import { formatReminderTime } from '../constants/priorities';
+import { REMINDER_TIMES, formatReminderTime } from '../constants/priorities';
 import { addDaysKey, allTags, formatDueLabel, todayKey } from '../utils/taskUtils';
 import PrioritySelector from '../components/PrioritySelector';
 import CategorySelector from '../components/CategorySelector';
@@ -29,6 +29,8 @@ export default function AddEditTaskScreen({ task, onSave, onCancel, onDuplicate 
   const [dueDate, setDueDate] = useState(task?.dueDate || null);
   const [remind, setRemind] = useState(task?.remind ?? settings.remindByDefault);
   const [remindDayOffset, setRemindDayOffset] = useState(task?.remindDayOffset || 0);
+  const [remindTime, setRemindTime] = useState(task?.reminderTime || '09:00');
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [tags, setTags] = useState(task?.tags || []);
   const [tagDraft, setTagDraft] = useState('');
   const [recurring, setRecurring] = useState(task?.recurring || null);
@@ -58,6 +60,7 @@ export default function AddEditTaskScreen({ task, onSave, onCancel, onDuplicate 
         dueDate,
         remind: dueDate ? remind : false,
         remindDayOffset,
+        reminderTime: remindTime,
         tags,
         recurring,
         subtasks,
@@ -85,6 +88,18 @@ export default function AddEditTaskScreen({ task, onSave, onCancel, onDuplicate 
 
   const isCustomDate = dueDate && ![todayKey(), addDaysKey(1), addDaysKey(7)].includes(dueDate);
 
+  // --- Custom reminder time (any HH:MM, not just the presets) ---
+  const isPresetTime = REMINDER_TIMES.some((t) => t.key === remindTime);
+  const [rHour, rMinute] = remindTime.split(':').map(Number);
+  const rPeriod = rHour >= 12 ? 'PM' : 'AM';
+  const rHour12 = rHour % 12 === 0 ? 12 : rHour % 12;
+  const setCustomTime = (hour12, minute, period) => {
+    let h = hour12 % 12;
+    if (period === 'PM') h += 12;
+    setRemindTime(`${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+  };
+  const MINUTE_STEPS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -92,6 +107,9 @@ export default function AddEditTaskScreen({ task, onSave, onCancel, onDuplicate 
     >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{isEditing ? 'Edit Task' : 'New Task'}</Text>
+        <TouchableOpacity style={styles.closeBtn} onPress={onCancel} accessibilityLabel="Cancel">
+          <Text style={styles.closeText}>✕</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView>
@@ -152,9 +170,8 @@ export default function AddEditTaskScreen({ task, onSave, onCancel, onDuplicate 
               <View style={{ flex: 1 }}>
                 <Text style={styles.switchTitle}>Remind me</Text>
                 <Text style={styles.switchSub}>
-                  Notification at {formatReminderTime(settings.reminderTime)}
+                  Notification at {formatReminderTime(remindTime)}
                   {remindDayOffset === 1 ? ', the day before' : ' on the due date'}
-                  {' '}(time is set in Settings)
                 </Text>
               </View>
               <Switch value={remind} onValueChange={setRemind} trackColor={{ true: colors.primary }} />
@@ -162,20 +179,86 @@ export default function AddEditTaskScreen({ task, onSave, onCancel, onDuplicate 
           )}
 
           {!!dueDate && remind && (
-            <View style={[styles.chipRow, { marginTop: 10 }]}>
-              <TouchableOpacity
-                onPress={() => setRemindDayOffset(0)}
-                style={[styles.chip, remindDayOffset === 0 && styles.chipActive]}
-              >
-                <Text style={[styles.chipText, remindDayOffset === 0 && styles.chipTextActive]}>On the due date</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setRemindDayOffset(1)}
-                style={[styles.chip, remindDayOffset === 1 && styles.chipActive]}
-              >
-                <Text style={[styles.chipText, remindDayOffset === 1 && styles.chipTextActive]}>1 day before</Text>
-              </TouchableOpacity>
-            </View>
+            <>
+              <View style={[styles.chipRow, { marginTop: 10 }]}>
+                <TouchableOpacity
+                  onPress={() => setRemindDayOffset(0)}
+                  style={[styles.chip, remindDayOffset === 0 && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, remindDayOffset === 0 && styles.chipTextActive]}>On the due date</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setRemindDayOffset(1)}
+                  style={[styles.chip, remindDayOffset === 1 && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, remindDayOffset === 1 && styles.chipTextActive]}>1 day before</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.label}>Reminder time</Text>
+              <View style={styles.chipRow}>
+                {REMINDER_TIMES.map((t) => (
+                  <TouchableOpacity
+                    key={t.key}
+                    onPress={() => { setRemindTime(t.key); setShowTimePicker(false); }}
+                    style={[styles.chip, remindTime === t.key && styles.chipActive]}
+                  >
+                    <Text style={[styles.chipText, remindTime === t.key && styles.chipTextActive]}>{t.label}</Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  onPress={() => setShowTimePicker((s) => !s)}
+                  style={[styles.chip, (!isPresetTime || showTimePicker) && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, (!isPresetTime || showTimePicker) && styles.chipTextActive]}>
+                    {isPresetTime ? 'Custom…' : formatReminderTime(remindTime)}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {showTimePicker && (
+                <View style={styles.timePanel}>
+                  <View style={styles.chipRow}>
+                    {['AM', 'PM'].map((p) => (
+                      <TouchableOpacity
+                        key={p}
+                        onPress={() => setCustomTime(rHour12, rMinute, p)}
+                        style={[styles.chip, rPeriod === p && styles.chipActive]}
+                      >
+                        <Text style={[styles.chipText, rPeriod === p && styles.chipTextActive]}>{p}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <Text style={styles.timePanelLabel}>Hour</Text>
+                  <View style={styles.chipRow}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => (
+                      <TouchableOpacity
+                        key={h}
+                        onPress={() => setCustomTime(h, rMinute, rPeriod)}
+                        style={[styles.chip, styles.timeChip, rHour12 === h && styles.chipActive]}
+                      >
+                        <Text style={[styles.chipText, rHour12 === h && styles.chipTextActive]}>{h}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <Text style={styles.timePanelLabel}>Minute</Text>
+                  <View style={styles.chipRow}>
+                    {MINUTE_STEPS.map((m) => (
+                      <TouchableOpacity
+                        key={m}
+                        onPress={() => setCustomTime(rHour12, m, rPeriod)}
+                        style={[styles.chip, styles.timeChip, rMinute === m && styles.chipActive]}
+                      >
+                        <Text style={[styles.chipText, rMinute === m && styles.chipTextActive]}>{String(m).padStart(2, '0')}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+              <Text style={styles.hint}>
+                This task's own reminder time — pick a preset or set any
+                custom time. Leave it alone to keep the 9:00 AM default.
+              </Text>
+            </>
           )}
 
           <Text style={styles.label}>Tags</Text>
@@ -252,8 +335,16 @@ export default function AddEditTaskScreen({ task, onSave, onCancel, onDuplicate 
 function makeStyles(colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: { backgroundColor: colors.primaryDark, paddingTop: 56, paddingBottom: 20, paddingHorizontal: 20 },
+    header: {
+      backgroundColor: colors.primaryDark, paddingTop: 56, paddingBottom: 20, paddingHorizontal: 20,
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    },
     headerTitle: { fontSize: 24, fontWeight: '800', color: colors.white },
+    closeBtn: {
+      width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.18)',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    closeText: { color: colors.white, fontSize: 17, fontWeight: '700' },
     card: {
       margin: 16, backgroundColor: colors.card, borderRadius: 16, padding: 16,
       elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8,
@@ -277,6 +368,12 @@ function makeStyles(colors) {
     switchTitle: { fontWeight: '700', color: colors.text },
     switchSub: { color: colors.textFaint, fontSize: 12, marginTop: 2 },
     hint: { color: colors.textFaint, fontSize: 12, marginTop: 8, lineHeight: 17 },
+    timePanel: {
+      marginTop: 10, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 12, padding: 12, backgroundColor: colors.background,
+    },
+    timePanelLabel: { fontWeight: '700', color: colors.text, fontSize: 12, marginTop: 10, marginBottom: 6 },
+    timeChip: { minWidth: 44, alignItems: 'center' },
     tagInputRow: { flexDirection: 'row', gap: 8 },
     tagAddBtn: { backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center' },
     duplicateBtn: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.primary, marginTop: 10 },

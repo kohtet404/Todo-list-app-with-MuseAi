@@ -8,7 +8,8 @@ export const DEFAULT_SETTINGS = {
   defaultPriority: 'medium', // 'low' | 'medium' | 'high'
   sortBy: 'created', // 'created' | 'deadline' | 'priority' | 'name'
   remindByDefault: false, // pre-tick "Remind me" when a deadline is chosen
-  reminderTime: '09:00', // 'HH:MM' — time of day deadline reminders fire
+  // (Reminder TIME is not a setting any more — each task carries its
+  // own reminderTime, editable on the task itself.)
   customLists: [], // user-created lists: [{ key, label, color }]
 };
 

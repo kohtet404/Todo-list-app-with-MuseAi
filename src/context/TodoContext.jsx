@@ -5,7 +5,7 @@
 // spawning the next occurrence of a recurring task, and refreshing the
 // home-screen widget.
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import { loadTodos, saveTodos } from '../storage/todoStorage';
 import { createId, createTask, getStats, nextDueDate, normalizeTask } from '../utils/taskUtils';
 import { scheduleTaskReminder, cancelTaskReminder } from '../services/notifications';
@@ -30,8 +30,21 @@ export function TodoProvider({ children }) {
     syncTodayWidget(todos);
   }, [todos, loaded]);
 
-  // extras: { notes, category, dueDate, remind, remindDayOffset, tags,
-  //           recurring, subtasks, pinned }
+  // The home-screen widget can complete tasks while the app is in the
+  // background (its checkbox writes straight to storage). Re-read
+  // storage whenever the app returns to the foreground so the list
+  // never shows stale state.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (nextState) => {
+      if (nextState === 'active' && loaded) {
+        setTodos((await loadTodos()).map(normalizeTask));
+      }
+    });
+    return () => sub.remove();
+  }, [loaded]);
+
+  // extras: { notes, category, dueDate, remind, remindDayOffset,
+  //           reminderTime, tags, recurring, subtasks, pinned }
   const addTodo = async (title, priority, extras = {}) => {
     if (!title?.trim()) return;
     const task = createTask(title, priority, extras);
@@ -52,6 +65,7 @@ export function TodoProvider({ children }) {
       dueDate: extras.dueDate ?? existing.dueDate ?? null,
       remind: extras.remind ?? existing.remind ?? false,
       remindDayOffset: extras.remindDayOffset ?? existing.remindDayOffset ?? 0,
+      reminderTime: extras.reminderTime ?? existing.reminderTime ?? '09:00',
       tags: extras.tags ?? existing.tags ?? [],
       recurring: extras.recurring ?? existing.recurring ?? null,
       subtasks: extras.subtasks ?? existing.subtasks ?? [],
@@ -80,6 +94,7 @@ export function TodoProvider({ children }) {
         dueDate: nextDueDate(existing.dueDate, existing.recurring),
         remind: existing.remind,
         remindDayOffset: existing.remindDayOffset || 0,
+        reminderTime: existing.reminderTime || '09:00',
         tags: existing.tags || [],
         recurring: existing.recurring,
         subtasks: (existing.subtasks || []).map((s) => ({ ...s, completed: false })),
@@ -128,27 +143,13 @@ export function TodoProvider({ children }) {
       dueDate: existing.dueDate,
       remind: existing.remind,
       remindDayOffset: existing.remindDayOffset || 0,
+      reminderTime: existing.reminderTime || '09:00',
       tags: existing.tags || [],
       recurring: existing.recurring,
       subtasks: (existing.subtasks || []).map((s) => ({ ...s, id: createId(), completed: false })),
     });
     copy.notificationId = await scheduleTaskReminder(copy);
     setTodos((prev) => [copy, ...prev]);
-  };
-
-  // Called from Settings right after the reminder time changes:
-  // re-schedule every active reminder at the new time of day.
-  const rescheduleAllReminders = async (time) => {
-    const updated = [];
-    for (const t of todos) {
-      if (!t.completed && t.remind && t.dueDate) {
-        updated.push({ ...t, notificationId: await scheduleTaskReminder(t, time) });
-      }
-    }
-    if (updated.length) {
-      const byId = Object.fromEntries(updated.map((t) => [t.id, t]));
-      setTodos((prev) => prev.map((t) => byId[t.id] || t));
-    }
   };
 
   // When a custom list is deleted, its tasks fall back to General.
@@ -185,7 +186,7 @@ export function TodoProvider({ children }) {
     todos, loaded, stats,
     addTodo, updateTodo, toggleTodo, togglePin, deleteTodo,
     clearCompleted, deleteAllTodos, exportJson,
-    duplicateTodo, rescheduleAllReminders, reassignCategory, importTodos,
+    duplicateTodo, reassignCategory, importTodos,
   };
 
   return <TodoContext.Provider value={value}>{children}</TodoContext.Provider>;

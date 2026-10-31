@@ -14,7 +14,7 @@ export default function TodoItem({ todo, onToggle, onDelete, onEdit, onPin }) {
   const category = resolveCategory(todo.category, settings.customLists);
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { borderLeftWidth: 4, borderLeftColor: PRIORITY_COLOR[todo.priority] || PRIORITY_COLOR.medium }]}>
       <TouchableOpacity
         style={[styles.checkbox, todo.completed && styles.checkboxDone]}
         onPress={() => onToggle(todo.id)}

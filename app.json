@@ -10,7 +10,10 @@
     "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.todolist.app"
+      "bundleIdentifier": "com.todolist.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "name": "Todo List",
     "orientation": "portrait",

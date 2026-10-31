@@ -18,6 +18,7 @@ export function createTask(title, priority, extras = {}) {
     dueDate: extras.dueDate || null, // 'YYYY-MM-DD' or null
     remind: !!extras.remind,
     remindDayOffset: extras.remindDayOffset || 0, // 0 = on due date, 1 = day before
+    reminderTime: extras.reminderTime || '09:00', // 'HH:MM', per task
     tags: Array.isArray(extras.tags) ? extras.tags : [],
     recurring: extras.recurring || null, // null | 'daily' | 'weekly' | 'monthly'
     subtasks: Array.isArray(extras.subtasks) ? extras.subtasks : [],
@@ -37,6 +38,7 @@ export function normalizeTask(t) {
     dueDate: null,
     remind: false,
     remindDayOffset: 0,
+    reminderTime: '09:00',
     tags: [],
     notificationId: null,
     completedAt: null,

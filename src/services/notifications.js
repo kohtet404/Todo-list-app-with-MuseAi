@@ -4,14 +4,13 @@
 // not fully in Expo Go. All calls are wrapped so a failure here can
 // never break saving a task.
 //
-// WHEN a reminder fires: at the time of day chosen in Settings
-// (settings.reminderTime, 'HH:MM', default 09:00) on the due date —
+// WHEN a reminder fires: at the task's OWN reminderTime ('HH:MM',
+// default 09:00 — chosen per task in the editor) on the due date —
 // or on the day BEFORE the due date when the task's remindDayOffset
-// is 1. The service reads the saved settings itself on every call,
-// so callers never have to pass the time around.
+// is 1. There is deliberately no global reminder-time setting: each
+// task decides for itself.
 import * as Notifications from 'expo-notifications';
 import { parseDateKey, toDateKey } from '../utils/taskUtils';
-import { loadSettings } from '../storage/settingsStorage';
 
 try {
   Notifications.setNotificationHandler({
@@ -58,16 +57,14 @@ export function reminderDateFor(dueDateKey, dayOffset = 0, time = '09:00', now =
   return null;
 }
 
-// Schedule (or re-schedule) the reminder for a task.
-// timeOverride lets Settings reschedule everything with the new time
-// immediately, before the settings save has flushed to storage.
-// Returns the notification id, or null when nothing was scheduled.
-export async function scheduleTaskReminder(task, timeOverride) {
+// Schedule (or re-schedule) the reminder for a task, using the
+// task's own reminderTime. Returns the notification id, or null
+// when nothing was scheduled.
+export async function scheduleTaskReminder(task) {
   try {
     await cancelTaskReminder(task?.notificationId);
     if (!task || task.completed || !task.remind || !task.dueDate) return null;
-    const time = timeOverride || (await loadSettings()).reminderTime || '09:00';
-    const when = reminderDateFor(task.dueDate, task.remindDayOffset || 0, time);
+    const when = reminderDateFor(task.dueDate, task.remindDayOffset || 0, task.reminderTime || '09:00');
     if (!when) return null;
     const granted = await ensureNotificationPermission();
     if (!granted) return null;

@@ -10,6 +10,7 @@
 //                   categories, recurrences, sort orders
 //   src/hooks/      OTA updates    src/navigation/ which page is shown
 import React from 'react';
+import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { registerWidgetTaskHandler } from 'react-native-android-widget';
 import { SettingsProvider } from './src/context/SettingsContext';
@@ -20,8 +21,12 @@ import AppNavigator from './src/navigation/AppNavigator';
 
 // Register the widget's headless task at the top level of the entry file:
 // Android starts this same JS bundle (without showing the app) whenever
-// the home-screen widget needs to draw.
-registerWidgetTaskHandler(widgetTaskHandler);
+// the home-screen widget needs to draw. Android ONLY — the widget
+// library has no iOS native side, so the registration is guarded and
+// the rest of the app runs unchanged on iOS (without the widget).
+if (Platform.OS === 'android') {
+  registerWidgetTaskHandler(widgetTaskHandler);
+}
 
 function Root() {
   const { updateStatus, checkUpdateManually } = useUpdates();

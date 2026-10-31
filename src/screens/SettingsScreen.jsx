@@ -10,9 +10,7 @@ import {
 import { useSettings } from '../context/SettingsContext';
 import { useTodos } from '../context/TodoContext';
 import { sendTestNotification } from '../services/notifications';
-import {
-  CATEGORIES, LIST_COLORS, REMINDER_TIMES, formatReminderTime, SORTS,
-} from '../constants/priorities';
+import { CATEGORIES, LIST_COLORS, SORTS } from '../constants/priorities';
 import { createId } from '../utils/taskUtils';
 import PrioritySelector from '../components/PrioritySelector';
 
@@ -20,7 +18,7 @@ export default function SettingsScreen({ updateStatus, onCheckUpdates }) {
   const { settings, updateSetting, colors } = useSettings();
   const {
     todos, stats, deleteAllTodos, exportJson,
-    rescheduleAllReminders, reassignCategory, importTodos,
+    reassignCategory, importTodos,
   } = useTodos();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -38,12 +36,6 @@ export default function SettingsScreen({ updateStatus, onCheckUpdates }) {
     } else {
       Alert.alert('Could not schedule', String(result.reason));
     }
-  };
-
-  const handleReminderTime = (time) => {
-    updateSetting('reminderTime', time);
-    // Re-schedule every active reminder at the new time right away.
-    rescheduleAllReminders(time);
   };
 
   const handleAddList = () => {
@@ -185,23 +177,12 @@ export default function SettingsScreen({ updateStatus, onCheckUpdates }) {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Notifications</Text>
         <Text style={styles.body}>
-          Deadline reminders fire at the time below, on the due date — or
-          the day before, if you choose that on a task. Changing the time
-          re-schedules all existing reminders. If Android asks, allow
+          Each task has its own reminder time — set it on the task
+          itself when you turn on "Remind me" (default 9:00 AM), on the
+          due date or the day before. There is no global time here on
+          purpose: every task can differ. If Android asks, allow
           notifications for this app.
         </Text>
-        <Text style={styles.label}>Reminder time</Text>
-        <View style={styles.chipRow}>
-          {REMINDER_TIMES.map((t) => (
-            <TouchableOpacity
-              key={t.key}
-              onPress={() => handleReminderTime(t.key)}
-              style={[styles.chip, settings.reminderTime === t.key && styles.chipActive]}
-            >
-              <Text style={[styles.chipText, settings.reminderTime === t.key && styles.chipTextActive]}>{t.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
         <TouchableOpacity style={styles.actionBtn} onPress={handleTestNotification}>
           <Text style={styles.actionBtnText}>🔔 Send test notification</Text>
         </TouchableOpacity>
