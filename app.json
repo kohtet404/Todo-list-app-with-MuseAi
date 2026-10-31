@@ -1,0 +1,67 @@
+{
+  "expo": {
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "package": "com.todolist.app"
+    },
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.todolist.app"
+    },
+    "name": "Todo List",
+    "orientation": "portrait",
+    "slug": "todo-app-final",
+    "splash": {
+      "backgroundColor": "#ffffff",
+      "image": "./assets/splash.png",
+      "resizeMode": "contain"
+    },
+    "userInterfaceStyle": "light",
+    "version": "2.1.0",
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "notification": {
+      "color": "#4f46e5"
+    },
+    "plugins": [
+      "expo-notifications",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "TodoToday",
+              "label": "Today's Tasks",
+              "description": "See today's tasks and what's overdue",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
+    ],
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9247c3da-7676-4420-a39d-cd53e705fb33"
+      }
+    },
+    "owner": "kohtet404"
+  }
+}
